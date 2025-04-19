@@ -4,7 +4,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cardápio Adega Ibiza</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.9.3/html2pdf.bundle.min.js"></script>
-    <link rel="manifest" href="manifest.json">
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
 
@@ -389,6 +388,8 @@
             }
         }
     </style>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="styles.css">
 </head>
 <body class="intro-active">
     <video class="video-background" autoplay muted loop playsinline>
@@ -405,7 +406,6 @@
         </a>
         <div class="pdf-button-container">
             <button id="downloadPDF" class="download-btn">Baixar PDF</button>
-            <button id="addToHomeScreen" class="add-home-btn">Adicionar à Tela Inicial</button>
         </div>
         <header>
             <h1>Cardápio Adega Ibiza</h1>
@@ -510,17 +510,36 @@
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             setupIntroEffect();
-            
             addSmoothScrolling();
-            
             animateOnScroll();
-            
             setupPDFDownload();
-            
-            setupAddToHomeScreen();
-            
             setupThemeToggle();
+            setupManifest();
         });
+
+        function setupManifest() {
+            const manifestData = {
+                "name": "Cardápio Adega Ibiza",
+                "short_name": "Adega Ibiza",
+                "description": "Cardápio digital da Adega Ibiza com lista de bebidas e combos",
+                "start_url": "/",
+                "display": "standalone",
+                "background_color": "#222831",
+                "theme_color": "#FFD369",
+                "icons": [
+                    {
+                        "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23222831' rx='64'/%3E%3Cpath d='M150 140h212a30 30 0 0 1 30 30v60a60 60 0 0 1-60 60h-152a60 60 0 0 1-60-60v-60a30 30 0 0 1 30-30z' fill='%23393E46'/%3E%3Cpath d='M150 320h212a30 30 0 0 1 30 30v20a30 30 0 0 1-30 30h-212a30 30 0 0 1-30-30v-20a30 30 0 0 1 30-30z' fill='%23393E46'/%3E%3Cpath d='M310 140h40a20 20 0 0 1 20 20v90a20 20 0 0 1-20 20h-40a20 20 0 0 1-20-20v-90a20 20 0 0 1 20-20z' fill='%23FFD369'/%3E%3Cpath d='M200 180h60v80h-60a40 40 0 0 1-40-40 40 40 0 0 1 40-40z' fill='%23FFD369'/%3E%3Ccircle cx='256' cy='340' r='20' fill='%23FFD369'/%3E%3C/svg%3E",
+                        "sizes": "512x512",
+                        "type": "image/svg+xml",
+                        "purpose": "any maskable"
+                    }
+                ]
+            };
+
+            const manifestBlob = new Blob([JSON.stringify(manifestData)], {type: 'application/json'});
+            const manifestURL = URL.createObjectURL(manifestBlob);
+            document.querySelector('link[rel="manifest"]').href = manifestURL;
+        }
 
         function setupIntroEffect() {
             const body = document.body;
@@ -584,11 +603,78 @@
                     instagramLink.remove();
                 }
                 
+                Array.from(clonedMenu.querySelectorAll('.card')).forEach(card => {
+                    card.style.opacity = '1';
+                    card.style.transform = 'none';
+                });
+                
+                Array.from(clonedMenu.querySelectorAll('.beer-list span')).forEach(span => {
+                    span.style.display = 'inline-block';
+                });
+                
+                Array.from(clonedMenu.querySelectorAll('.combo-info, .flashing-text')).forEach(el => {
+                    el.style.color = '#FF0000';
+                    el.style.fontWeight = 'bold';
+                    el.style.animation = 'none';
+                    el.style.opacity = '1';
+                });
+                
+                try {
+                    const observer = new ResizeObserver(() => {});
+                    observer.disconnect();
+                } catch (e) {
+                    console.log('ResizeObserver not available');
+                }
+                
+                window.addEventListener('error', function(e) {
+                    if (e.message === 'ResizeObserver loop limit exceeded' || 
+                        e.message === 'ResizeObserver loop completed with undelivered notifications.') {
+                        e.stopImmediatePropagation();
+                    }
+                });
+                
                 const options = {
-                    margin: 10,
+                    margin: 0,
                     filename: 'cardapio-adega-ibiza.pdf',
                     image: { type: 'jpeg', quality: 0.98 },
-                    html2canvas: { scale: 2 },
+                    html2canvas: { 
+                        scale: 2,
+                        width: document.querySelector('.menu-container').offsetWidth,
+                        onclone: function(clonedDoc) {
+                            Array.from(clonedDoc.querySelectorAll('.card')).forEach(card => {
+                                card.style.opacity = '1';
+                                card.style.transform = 'none';
+                            });
+                            
+                            Array.from(clonedDoc.querySelectorAll('.beer-list')).forEach(list => {
+                                list.style.display = 'flex';
+                                list.style.flexWrap = 'wrap';
+                                list.style.gap = '10px';
+                            });
+                            
+                            Array.from(clonedDoc.querySelectorAll('.beer-list span')).forEach(span => {
+                                span.style.display = 'inline-block';
+                                span.style.backgroundColor = 'rgba(255, 211, 105, 0.1)';
+                                span.style.borderRadius = '5px';
+                                span.style.padding = '5px 10px';
+                            });
+                            
+                            Array.from(clonedDoc.querySelectorAll('.combo-info')).forEach(info => {
+                                info.style.backgroundColor = '#FFD369';
+                                info.style.color = '#121418';
+                                info.style.padding = '15px';
+                                info.style.borderRadius = '10px';
+                                info.style.marginBottom = '20px';
+                                info.style.textAlign = 'center';
+                            });
+                            
+                            Array.from(clonedDoc.querySelectorAll('.flashing-text')).forEach(text => {
+                                text.style.color = '#FF0000';
+                                text.style.fontWeight = 'bold';
+                                text.style.animation = 'none';
+                            });
+                        }
+                    },
                     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
                 };
                 
@@ -629,114 +715,6 @@
                 }
             }
         }
-
-        function setupAddToHomeScreen() {
-            const addToHomeBtn = document.getElementById('addToHomeScreen');
-            
-            let deferredPrompt;
-            
-            window.addEventListener('beforeinstallprompt', (e) => {
-                e.preventDefault();
-                deferredPrompt = e;
-                addToHomeBtn.style.display = 'block';
-            });
-            
-            addToHomeBtn.addEventListener('click', async () => {
-                if (deferredPrompt) {
-                    deferredPrompt.prompt();
-                    const { outcome } = await deferredPrompt.userChoice;
-                    
-                    if (outcome === 'accepted') {
-                        console.log('App was added to home screen');
-                    } else {
-                        console.log('App was not added to home screen');
-                        showManualInstallInstructions();
-                    }
-                    
-                    deferredPrompt = null;
-                } else {
-                    showManualInstallInstructions();
-                }
-            });
-            
-            function showManualInstallInstructions() {
-                const instructionModal = document.createElement('div');
-                instructionModal.className = 'install-modal';
-                
-                const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
-                const isAndroid = /Android/.test(navigator.userAgent);
-                
-                let instructions = '';
-                if (isIOS) {
-                    instructions = `
-                        <h3>Adicionar à Tela Inicial no iOS:</h3>
-                        <ol>
-                            <li>Toque no ícone de compartilhar <span class="icon">⎙</span></li>
-                            <li>Role para baixo e toque em "Adicionar à Tela de Início"</li>
-                            <li>Toque em "Adicionar" no canto superior direito</li>
-                        </ol>
-                    `;
-                } else if (isAndroid) {
-                    instructions = `
-                        <h3>Adicionar à Tela Inicial no Android:</h3>
-                        <ol>
-                            <li>Toque no menu <span class="icon">⋮</span> do navegador</li>
-                            <li>Toque em "Adicionar à tela inicial"</li>
-                        </ol>
-                    `;
-                } else {
-                    instructions = `
-                        <h3>Adicionar à Tela Inicial:</h3>
-                        <p>Em dispositivos móveis, use o menu do navegador e selecione "Adicionar à tela inicial".</p>
-                    `;
-                }
-                
-                instructionModal.innerHTML = `
-                    <div class="modal-content">
-                        <span class="close-btn">&times;</span>
-                        <h2>Como Adicionar à Tela Inicial</h2>
-                        ${instructions}
-                    </div>
-                `;
-                
-                document.body.appendChild(instructionModal);
-                
-                const closeBtn = instructionModal.querySelector('.close-btn');
-                closeBtn.addEventListener('click', () => {
-                    document.body.removeChild(instructionModal);
-                });
-                
-                instructionModal.addEventListener('click', (e) => {
-                    if (e.target === instructionModal) {
-                        document.body.removeChild(instructionModal);
-                    }
-                });
-            }
-        }
-
-        const manifestData = {
-          "name": "Cardápio Adega Ibiza",
-          "short_name": "Adega Ibiza",
-          "description": "Cardápio digital da Adega Ibiza com lista de bebidas e combos",
-          "start_url": "/",
-          "display": "standalone",
-          "background_color": "#222831",
-          "theme_color": "#FFD369",
-          "icons": [
-            {
-              "src": "data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 512 512'%3E%3Crect width='512' height='512' fill='%23222831' rx='64'/%3E%3Cpath d='M150 140h212a30 30 0 0 1 30 30v60a60 60 0 0 1-60 60h-152a60 60 0 0 1-60-60v-60a30 30 0 0 1 30-30z' fill='%23393E46'/%3E%3Cpath d='M150 320h212a30 30 0 0 1 30 30v20a30 30 0 0 1-30 30h-212a30 30 0 0 1-30-30v-20a30 30 0 0 1 30-30z' fill='%23393E46'/%3E%3Cpath d='M310 140h40a20 20 0 0 1 20 20v90a20 20 0 0 1-20 20h-40a20 20 0 0 1-20-20v-90a20 20 0 0 1 20-20z' fill='%23FFD369'/%3E%3Cpath d='M200 180h60v80h-60a40 40 0 0 1-40-40 40 40 0 0 1 40-40z' fill='%23FFD369'/%3E%3Ccircle cx='256' cy='340' r='20' fill='%23FFD369'/%3E%3C/svg%3E",
-              "sizes": "512x512",
-              "type": "image/svg+xml",
-              "purpose": "any maskable"
-            }
-          ]
-        };
-
-        const manifestBlob = new Blob([JSON.stringify(manifestData)], {type: 'application/json'});
-
-        const manifestURL = URL.createObjectURL(manifestBlob);
-
-        document.querySelector('link[rel="manifest"]').href = manifestURL;
     </script>
 </body>
 </html>
