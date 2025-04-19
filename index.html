@@ -50,6 +50,11 @@
             height: 100%;
             object-fit: cover;
             z-index: -2;
+            transition: z-index 0.5s ease;
+        }
+
+        .intro-active .video-background {
+            z-index: 1000;
         }
 
         .overlay {
@@ -70,6 +75,12 @@
             overflow: hidden;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
             position: relative;
+            opacity: 1;
+            transition: opacity 0.5s ease;
+        }
+
+        .intro-active .menu-container {
+            opacity: 0;
         }
 
         header {
@@ -379,7 +390,7 @@
         }
     </style>
 </head>
-<body>
+<body class="intro-active">
     <video class="video-background" autoplay muted loop playsinline>
         <source src="https://res.cloudinary.com/smartapp/video/upload/v1745020166/fundo_aou0kd.mp4" type="video/mp4">
     </video>
@@ -498,21 +509,29 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            // Add smooth scrolling for section navigation
+            setupIntroEffect();
+            
             addSmoothScrolling();
             
-            // Add animation for cards on scroll
             animateOnScroll();
             
-            // Add PDF download functionality
             setupPDFDownload();
             
-            // Add 'Add to Home Screen' functionality
             setupAddToHomeScreen();
             
-            // Setup theme toggle
             setupThemeToggle();
         });
+
+        function setupIntroEffect() {
+            const body = document.body;
+            const video = document.querySelector('.video-background');
+            
+            video.currentTime = 5;
+            
+            setTimeout(() => {
+                body.classList.remove('intro-active');
+            }, 3000);
+        }
 
         function addSmoothScrolling() {
             document.querySelectorAll('a[href^="#"]').forEach(anchor => {
@@ -526,7 +545,6 @@
         }
 
         function animateOnScroll() {
-            // Simple animation for cards when they come into view
             const cards = document.querySelectorAll('.card');
             
             const observer = new IntersectionObserver((entries) => {
@@ -548,29 +566,24 @@
             const downloadBtn = document.getElementById('downloadPDF');
             
             downloadBtn.addEventListener('click', function() {
-                // Create a clone of the menu container to modify for PDF
                 const menuContainer = document.querySelector('.menu-container');
                 const clonedMenu = menuContainer.cloneNode(true);
                 
-                // Remove the download button from the clone
                 const btnContainer = clonedMenu.querySelector('.pdf-button-container');
                 if (btnContainer) {
                     btnContainer.remove();
                 }
                 
-                // Remove theme toggle button
                 const themeToggle = clonedMenu.querySelector('.theme-toggle');
                 if (themeToggle) {
                     themeToggle.remove();
                 }
                 
-                // Remove instagram link
                 const instagramLink = clonedMenu.querySelector('.instagram-link');
                 if (instagramLink) {
                     instagramLink.remove();
                 }
                 
-                // Configure PDF options
                 const options = {
                     margin: 10,
                     filename: 'cardapio-adega-ibiza.pdf',
@@ -579,7 +592,6 @@
                     jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' }
                 };
                 
-                // Generate PDF
                 html2pdf().from(clonedMenu).set(options).save();
             });
         }
@@ -588,22 +600,18 @@
             const themeToggle = document.getElementById('themeToggle');
             const htmlElement = document.documentElement;
             
-            // Check for saved theme preference or use default dark theme
             const savedTheme = localStorage.getItem('theme') || 'dark';
             htmlElement.setAttribute('data-theme', savedTheme);
             updateIcon(savedTheme);
             
             themeToggle.addEventListener('click', () => {
-                // Toggle theme
                 const currentTheme = htmlElement.getAttribute('data-theme');
                 const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
                 
-                // Apply and save the new theme
                 htmlElement.setAttribute('data-theme', newTheme);
                 localStorage.setItem('theme', newTheme);
                 updateIcon(newTheme);
                 
-                // Update body background based on theme
                 if (newTheme === 'light') {
                     document.body.style.background = 'linear-gradient(135deg, #f5f5f7, #e2e2e4)';
                 } else {
@@ -611,11 +619,9 @@
                 }
             });
             
-            // Update the icon based on current theme
             function updateIcon(theme) {
                 themeToggle.innerHTML = theme === 'dark' ? '☀️' : '🌙';
                 
-                // Set initial background based on theme on page load
                 if (theme === 'light') {
                     document.body.style.background = 'linear-gradient(135deg, #f5f5f7, #e2e2e4)';
                 } else {
@@ -629,14 +635,12 @@
             
             let deferredPrompt;
             
-            // Store the install prompt event
             window.addEventListener('beforeinstallprompt', (e) => {
                 e.preventDefault();
                 deferredPrompt = e;
                 addToHomeBtn.style.display = 'block';
             });
             
-            // Handle the installation
             addToHomeBtn.addEventListener('click', async () => {
                 if (deferredPrompt) {
                     deferredPrompt.prompt();
@@ -655,12 +659,10 @@
                 }
             });
             
-            // Show manual installation instructions if PWA prompt isn't available
             function showManualInstallInstructions() {
                 const instructionModal = document.createElement('div');
                 instructionModal.className = 'install-modal';
                 
-                // Detect device and show appropriate instructions
                 const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent);
                 const isAndroid = /Android/.test(navigator.userAgent);
                 
@@ -699,13 +701,11 @@
                 
                 document.body.appendChild(instructionModal);
                 
-                // Close modal when clicking the X
                 const closeBtn = instructionModal.querySelector('.close-btn');
                 closeBtn.addEventListener('click', () => {
                     document.body.removeChild(instructionModal);
                 });
                 
-                // Close modal when clicking outside the content
                 instructionModal.addEventListener('click', (e) => {
                     if (e.target === instructionModal) {
                         document.body.removeChild(instructionModal);
@@ -714,7 +714,6 @@
             }
         }
 
-        // Embedded manifest data
         const manifestData = {
           "name": "Cardápio Adega Ibiza",
           "short_name": "Adega Ibiza",
@@ -733,13 +732,10 @@
           ]
         };
 
-        // Create a blob from the manifest data
         const manifestBlob = new Blob([JSON.stringify(manifestData)], {type: 'application/json'});
 
-        // Create a URL for the blob
         const manifestURL = URL.createObjectURL(manifestBlob);
 
-        // Update the manifest link href
         document.querySelector('link[rel="manifest"]').href = manifestURL;
     </script>
 </body>
